@@ -11,6 +11,7 @@ import TwitterIcon from '@mui/icons-material/Twitter';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBluesky, faFacebook, faInstagram, faTwitch } from '@fortawesome/free-brands-svg-icons';
 import { faPencilAlt } from '@fortawesome/free-solid-svg-icons'
+import { getPosts, writePost } from '@/firebase/operations';
 // import { Logo } from '@/svg/Logo';
 
 import { Swiper, SwiperClass, SwiperSlide } from 'swiper/react';
@@ -30,8 +31,8 @@ import { CpuBottom } from '@/svg/badge/bottom/cpuB';
 
 //
 
-const oldStandard = Old_Standard_TT({ weight : '400', subsets : ['latin'] })
-const alegreya = Alegreya_Sans_SC({ weight : '400', subsets : ['latin'] })
+const oldStandard = Old_Standard_TT({ weight: '400', subsets: ['latin'] })
+const alegreya = Alegreya_Sans_SC({ weight: '400', subsets: ['latin'] })
 
 export default function Page() {
   const [lastSwap, setLastSwap] = useState<DateTime>(DateTime.now())
@@ -114,33 +115,31 @@ export default function Page() {
 
     window.addEventListener("resize", handleResize);
     handleResize()
-    
+
     return () => {
       window.removeEventListener('resize', handleResize)
-      if(interval){
+      if (interval) {
         clearInterval(interval);
       }
     }
-  },[])
+  }, [])
 
-  useEffect(()=>{
+  useEffect(() => {
     setLastSwap(DateTime.now())
   }, [openEye])
 
-  useEffect(()=>{
-    if(lastSwap.diffNow(['seconds']).seconds < (swapTime*-1)){
+  useEffect(() => {
+    if (lastSwap.diffNow(['seconds']).seconds < (swapTime * -1)) {
       setOpenEye(!openEye)
     }
   }, [now])
-  
+
   // new for writing box
   const handleOpenModal = () => {
-    if(isModalOpen)
-    {
+    if (isModalOpen) {
       handleCloseModal();
     }
-    else
-    {
+    else {
       setModalOpen(true);
     }
   };
@@ -163,25 +162,27 @@ export default function Page() {
     );
   };
 
-  const handleSubmit = () => {
-    if(userName==="" && userNameRef.current)
-    {
+  const handleSubmit = async () => {
+    if (userName === "" && userNameRef.current) {
       userNameRef.current.focus();
       return;
     }
-    if(userComment==="" && userCommentRef.current)
-    {
+    if (userComment === "" && userCommentRef.current) {
       userCommentRef.current.focus();
       return;
     }
+    if (!selectedImageId) {
+      return;
+    }
 
-    const timestamp = new Date().toISOString();
-    const id = uuid();
-    console.log('Name:', userName);
-    console.log('Comment:', userComment);
-    console.log('Selected Image ID:', selectedImageId);
-    console.log('Time:', timestamp);
-    handleCloseModal();
+    try {
+      await writePost(userName, userComment, selectedImageId.toString());
+      await postMutate(); // Refresh the posts list
+      handleCloseModal();
+    } catch (error) {
+      console.error('Error submitting post:', error);
+      // You might want to show an error message to the user here
+    }
   };
 
   const gifts = [
@@ -237,43 +238,19 @@ export default function Page() {
     },
   ];
 
-  
+
   //end new
   const swiperRef = useRef<SwiperClass | null>(null);
 
-  const { data:postData, error:postError, isLoading:postIsLoading, isValidating:postIsValidating, mutate:postMutate } = useSWR('/post.json', async (url) => {
-    setPage(0)
-    const res = await fetch(url)
-    if(!res.ok){
-        return {
-            data : [],
-            total : 0
-        }
-    }
-    setPage(1)
-    return (await res.json()) as {
-      data : {
-        id : string,
-        name : string,
-        comment : string
-        giftId : string,
-        createdAt : string,
-        gift : {
-          id: string;
-          name: string;
-          desc: string | null;
-          imgURL: string;
-          bgColorCode: string;
-          borderColor: string;
-          order: number;
-        }
-      }[],
-      total : number
-    }
-  },{
-    revalidateOnMount : true,
-    revalidateOnFocus : false
-  })
+  const { data: postData, error: postError, isLoading: postIsLoading, isValidating: postIsValidating, mutate: postMutate } = useSWR('/posts', async () => {
+    setPage(0);
+    const result = await getPosts();
+    setPage(1);
+    return result;
+  }, {
+    revalidateOnMount: true,
+    revalidateOnFocus: false
+  });
 
 
   return (
@@ -285,9 +262,9 @@ export default function Page() {
           className="flex flex-col w-full items-center relative"
           style={{ height: "500px" }}
         > */}
-          <div
-            className="flex flex-col w-full items-center relative aspect-[2/1]"
-          >
+        <div
+          className="flex flex-col w-full items-center relative aspect-[2/1]"
+        >
           {/* <div
             className="hover:cursor-pointer"
             onClick={() => {
@@ -358,35 +335,31 @@ export default function Page() {
                   <div>
                     {banner.url && (
                       <Link
-                        className={`${isActive ? "" : "brightness-50"} ${
-                          isPrev || isNext || isActive
+                        className={`${isActive ? "" : "brightness-50"} ${isPrev || isNext || isActive
                             ? "opacity-100"
                             : "opacity-0"
-                        } transition`}
+                          } transition`}
                         href={banner.url}
                         target="_blank"
                       >
                         <img
                           src={banner.imgURL}
-                          className={`transition ease-linear sm:rounded-[50px] w-full object-cover aspect-video ${
-                            isActive ? "" : "scale-75"
-                          }`}
+                          className={`transition ease-linear sm:rounded-[50px] w-full object-cover aspect-video ${isActive ? "" : "scale-75"
+                            }`}
                         />
                       </Link>
                     )}
                     {!banner.url && (
                       <div
-                        className={`${isActive ? "" : "brightness-50"} ${
-                          isPrev || isNext || isActive
+                        className={`${isActive ? "" : "brightness-50"} ${isPrev || isNext || isActive
                             ? "opacity-100"
                             : "opacity-0"
-                        } transition`}
+                          } transition`}
                       >
                         <img
                           src={banner.imgURL}
-                          className={`transition ease-linear sm:rounded-[50px] w-full object-cover aspect-video ${
-                            isActive ? "" : "scale-75"
-                          }`}
+                          className={`transition ease-linear sm:rounded-[50px] w-full object-cover aspect-video ${isActive ? "" : "scale-75"
+                            }`}
                         />
                       </div>
                     )}
@@ -422,9 +395,8 @@ export default function Page() {
                     <button
                       key={gift.order}
                       onClick={() => setSelectedImageId(gift.order)}
-                      className={`image-button ${
-                        selectedImageId === gift.order ? "selected" : ""
-                      }`}
+                      className={`image-button ${selectedImageId === gift.order ? "selected" : ""
+                        }`}
                       style={{
                         borderColor:
                           selectedImageId === gift.order
@@ -626,26 +598,30 @@ export default function Page() {
                         {post.comment}
                       </span>
                       <div className="card-time w-full flex pt-4 min-[425px]:px-4 px-2 min-[425px]:text-base text-sm ">
-                        <span className="">
-                          {DateTime.fromISO(post.createdAt)
-                            .setZone("Asia/Bangkok")
-                            .toFormat("dd")}{" "}
-                          {DateTime.fromISO(post.createdAt)
-                            .setZone("Asia/Bangkok")
-                            .toFormat("LLLL")}{" "}
-                          {DateTime.fromISO(post.createdAt)
-                            .setZone("Asia/Bangkok")
-                            .toFormat("yy")}
-                        </span>
-                        <span className="flex-1 text-right">
-                          {DateTime.fromISO(post.createdAt)
-                            .setZone("Asia/Bangkok")
-                            .toFormat("HH")}
-                          :
-                          {DateTime.fromISO(post.createdAt)
-                            .setZone("Asia/Bangkok")
-                            .toFormat("mm")}
-                        </span>
+                        {post.createdAt && (
+                          <>
+                            <span className="">
+                              {DateTime.fromMillis(post.createdAt)
+                                .setZone("Asia/Bangkok")
+                                .toFormat("dd")}{" "}
+                              {DateTime.fromMillis(post.createdAt)
+                                .setZone("Asia/Bangkok")
+                                .toFormat("LLLL")}{" "}
+                              {DateTime.fromMillis(post.createdAt)
+                                .setZone("Asia/Bangkok")
+                                .toFormat("yy")}
+                            </span>
+                            <span className="flex-1 text-right">
+                              {DateTime.fromMillis(post.createdAt)
+                                .setZone("Asia/Bangkok")
+                                .toFormat("HH")}
+                              :
+                              {DateTime.fromMillis(post.createdAt)
+                                .setZone("Asia/Bangkok")
+                                .toFormat("mm")}
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
                     {/* Bottom */}
