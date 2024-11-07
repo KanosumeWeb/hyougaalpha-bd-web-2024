@@ -1,7 +1,6 @@
-import { db } from './config';  // Import the initialized db
+import { db } from './config';
 import { ref, push, get, serverTimestamp, DataSnapshot } from 'firebase/database';
 
-// Define more specific types
 export interface Gift {
     id: string;
     name: string;
@@ -12,7 +11,6 @@ export interface Gift {
     order: number;
 }
 
-// Define the raw post data structure from Firebase
 interface RawPost {
     name: string;
     comment: string;
@@ -29,7 +27,6 @@ export interface Post {
     gift: Gift;
 }
 
-// Type guard to validate raw post data
 function isValidRawPost(data: any): data is RawPost {
     return (
         typeof data === 'object' &&
@@ -41,7 +38,6 @@ function isValidRawPost(data: any): data is RawPost {
     );
 }
 
-// Map of gift data that matches the required structure
 const giftMap: Record<string, Gift> = {
     "1": {
         id: "ba8a1955-5f71-4cde-9886-62fc829784a1",
@@ -99,7 +95,7 @@ export const writePost = async (
         throw new Error(`Invalid giftId: ${giftId}`);
     }
 
-    const postsRef = ref(db, 'posts');  // Use db here instead of getDatabase()
+    const postsRef = ref(db, 'posts');  
     const postData: Omit<RawPost, 'createdAt'> & { createdAt: any } = {
         name: name.trim(),
         comment: comment.trim(),
@@ -120,7 +116,7 @@ export const writePost = async (
 };
 
 export const getPosts = async (): Promise<{ data: Post[]; total: number }> => {
-    const postsRef = ref(db, 'posts');  // Use db here instead of getDatabase()
+    const postsRef = ref(db, 'posts');  
 
     try {
         const snapshot = await get(postsRef);
