@@ -44,15 +44,15 @@ export default function App({ Component, pageProps: { session, ...pageProps } }:
         <Head>
           <title>HYOUGAALPHA's Birthday | 22 November</title>
           <meta name="title" content="HYOUGAALPHA's Birthday | 22 November" />
-          <meta name="description" content={`${process.env.NEXT_PUBLIC_DESCRIPTION}`} /> 
+          <meta name="description" content={`description`} /> 
 
           <meta property="og:type" content="website" />
-          <meta property="og:url" content={`${process.env.NEXT_PUBLIC_BASE_PATH}`} />
+          <meta property="og:url" content={`url`} />
           <meta property="og:title" content="HYOUGAALPHA's Birthday | 22 November" />
           <meta property="og:description" content={`เว็บไซด์สำหรับข่าวสารโปรเจ็กวันเกิด และ การอวยพรพรวันเกิดเฮียวกะอัลฟ่า Vtuber แห่งบ้าน ARP`} />
 
           <meta property="twitter:card" content="summary_large_image" />
-          <meta property="twitter:url" content={`${process.env.NEXT_PUBLIC_BASE_PATH}`} />
+          <meta property="twitter:url" content={`url`} />
           <meta property="twitter:title" content="HYOUGAALPHA's Birthday | 22 November" />
           <meta property="twitter:description" content={`เว็บไซด์สำหรับข่าวสารโปรเจ็กวันเกิด และ การอวยพรพรวันเกิดเฮียวกะอัลฟ่า Vtuber แห่งบ้าน ARP`} />
 
